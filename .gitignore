@@ -1,0 +1,13 @@
+# --- Secrets (bucket 1) ---
+.env
+
+# --- Python regenerated/machine-specific (bucket 2) ---
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# --- Produced data / outputs (bucket 3) ---
+data/
+*.csv
+*.json
