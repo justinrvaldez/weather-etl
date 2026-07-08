@@ -1,6 +1,7 @@
 import requests
 import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 def extractor():
 
     url = "https://api.open-meteo.com/v1/forecast"
@@ -20,5 +21,3 @@ def extractor():
     except requests.exceptions.RequestException as e:
         logging.error(f"Extraction failed: {e}")
         raise 
-    
-print(extractor())
