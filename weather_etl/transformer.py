@@ -1,10 +1,4 @@
 from extractor import extractor
-import pprint
-import datetime
-
-data = extractor()
-
-issue_date = datetime.datetime.now(datetime.timezone.utc)
 
 def transformer(extracted_data, date):
     precipitation_probability_length = len(extracted_data['hourly']['precipitation_probability'])
@@ -29,7 +23,6 @@ def transformer(extracted_data, date):
         "unit_temp": extracted_data["hourly_units"]["temperature_2m"],
     }
 
-    print(schema_location)
     readings = []
     for i in range(precipitation_probability_length):
         readings.append({
@@ -42,5 +35,3 @@ def transformer(extracted_data, date):
         })
         
     return schema_location, readings # Return order matters for consistency, schema_location first, readings second
-
-pprint.pprint(transformer(data, issue_date))
