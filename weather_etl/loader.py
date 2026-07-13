@@ -11,11 +11,12 @@ load_dotenv()
 issue_date = datetime.datetime.now(datetime.timezone.utc)
 schema_location, readings = transformer(extractor(), issue_date)
 
-# Establish a connection to the PostgreSQL database using psycopg. Connection parameters are retrieved from 
+# Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
+# Connection parameters are retrieved from 
 # environment variables for security and flexibility. Gitignore the .env file containing 
 # sensitive information like database credentials.
 
-connection = psycopg.connect(
+connection = psycopg.connect( # Initilize connection object by passing in connection arugements as keyword arguments. The connection parameters are retrieved from environment variables for security and flexibility.
     host=os.getenv("DB_HOST"),
     dbname=os.getenv("DB_NAME"),
     user=os.getenv("DB_USER"),
@@ -23,13 +24,13 @@ connection = psycopg.connect(
     port=os.getenv("DB_PORT")
 )
 
-cursor = connection.cursor()
+cursor_location = connection.cursor()
 
 # The order of the values must match the order of the columns in the
 # INSERT statement. Postgresql attached each %s placeholder to the 
-# corresponding value in the tuple provided as the second argument to cursor.execute().
+# corresponding value in the tuple provided as the second argument to cursor_location.execute().
 
-cursor.execute(
+cursor_location.execute(
     """
     INSERT INTO locations (
         latitude,
@@ -58,7 +59,7 @@ cursor.execute(
     )
 )
 
-result = cursor.fetchone()
+result = cursor_location.fetchone()
 
 if result is None:
     print("Location already exists.")
@@ -67,5 +68,5 @@ else:
     print(f"Inserted new location with ID: {location_id}")
 
 connection.commit()
-cursor.close()
+cursor_location.close()
 connection.close()
