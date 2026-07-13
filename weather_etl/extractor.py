@@ -7,7 +7,7 @@ def extractor():
     url = "https://api.open-meteo.com/v1/forecast"
 
     params = {
-        "latitude": 35.924086,
+        "latitude": 35.824086,
         "longitude": -106.791974,
         "hourly": ["temperature_2m", "precipitation_probability"],
         "temperature_unit": "fahrenheit",

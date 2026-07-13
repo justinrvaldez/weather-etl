@@ -11,7 +11,7 @@ def transformer(extracted_data, date):
             f"time={time_probability_length}, temp={temp_probability_length}"
         )
 
-    schema_location = {
+    location = {
         "location_id": None,
         "latitude": extracted_data["latitude"],
         "longitude": extracted_data["longitude"],
@@ -34,4 +34,4 @@ def transformer(extracted_data, date):
             "precipitation_probability": extracted_data['hourly']['precipitation_probability'][i]
         })
         
-    return schema_location, readings # Return order matters for consistency, schema_location first, readings second
+    return location, readings # Return order matters for consistency, location first, readings second
