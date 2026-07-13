@@ -8,13 +8,21 @@ import logging
 # Levels of logging severity, in increasing order, are: DEBUG, INFO, WARNING, ERROR, CRITICAL.
 # Currently set to INFO, which means that all messages at this level and above (WARNING, ERROR, CRITICAL) will be 
 # logged. Change after testing to WARNING or ERROR to reduce verbosity in production.
+# The format argument specifies the format of the log messages. 
+# In this case, it includes the timestamp, log level, and message content. Can be changed to 
+# include additional information like module name, function name, etc. if needed.
 
-logging.basicConfig(level=logging.DEBUG, format="%(filename)s %(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
 def extractor():
 
     url = "https://api.open-meteo.com/v1/forecast"
 
+    # Parameters for the API request are defined in a dictionary. If you want to add more parameters, you 
+    # can do so by adding key-value pairs to this dictionary. However this will change the schema of the data 
+    # returned by the API, and will require changes to the transformer function to handle the new data 
+    # structure as well as a change to the loader and SQL database schema to handle the new data structure.
+    
     params = {
         "latitude": 35.824086,
         "longitude": -106.791974,
@@ -42,5 +50,3 @@ def extractor():
     except requests.exceptions.RequestException as e:
         logging.error(f"Extraction failed: {e}")
         raise
-
-print(extractor())
