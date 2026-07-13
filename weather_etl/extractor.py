@@ -50,3 +50,4 @@ def extractor():
     except requests.exceptions.RequestException as e:
         logging.error(f"Extraction failed: {e}")
         raise
+    
