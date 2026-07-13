@@ -64,6 +64,7 @@ if result is None:
     print("Location already exists.")
 else:
     location_id = result[0]
+    print(f"Inserted new location with ID: {location_id}")
 
 connection.commit()
 cursor.close()
