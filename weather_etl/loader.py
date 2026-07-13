@@ -8,8 +8,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# issue_date = datetime.datetime.now(datetime.timezone.utc)
-# schema_location, readings = transformer(extractor(), issue_date)
+issue_date = datetime.datetime.now(datetime.timezone.utc)
+schema_location, readings = transformer(extractor(), issue_date)
+
+# Establish a connection to the PostgreSQL database using psycopg. Connection parameters are retrieved from 
+# environment variables for security and flexibility. Gitignore the .env file containing 
+# sensitive information like database credentials.
 
 connection = psycopg.connect(
     host=os.getenv("DB_HOST"),
@@ -20,8 +24,47 @@ connection = psycopg.connect(
 )
 
 cursor = connection.cursor()
-cursor.execute("SELECT version();")
-print(cursor.fetchone())
 
+# The order of the values must match the order of the columns in the
+# INSERT statement. Postgresql attached each %s placeholder to the 
+# corresponding value in the tuple provided as the second argument to cursor.execute().
+
+cursor.execute(
+    """
+    INSERT INTO locations (
+        latitude,
+        longitude,
+        elevation,
+        timezone,
+        utc_offset_seconds,
+        unit_precipitation,
+        unit_time,
+        unit_temp
+    )
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (latitude, longitude)
+    DO NOTHING
+    RETURNING location_id
+    """,
+    (
+        schema_location["latitude"],
+        schema_location["longitude"],
+        schema_location["elevation"],
+        schema_location["timezone"],
+        schema_location["utc_offset_seconds"],
+        schema_location["unit_precipitation"],
+        schema_location["unit_time"],
+        schema_location["unit_temp"],
+    )
+)
+
+result = cursor.fetchone()
+
+if result is None:
+    print("Location already exists.")
+else:
+    location_id = result[0]
+
+connection.commit()
 cursor.close()
 connection.close()
