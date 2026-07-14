@@ -11,12 +11,15 @@ load_dotenv()
 issue_date = datetime.datetime.now(datetime.timezone.utc)
 schema_location, readings = transformer(extractor(), issue_date)
 
-# Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
-# Connection parameters are retrieved from 
-# environment variables for security and flexibility. Gitignore the .env file containing 
-# sensitive information like database credentials.
+print(issue_date)
 
-connection = psycopg.connect( # Initilize connection object by passing in connection arugements as keyword arguments. The connection parameters are retrieved from environment variables for security and flexibility.
+# Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
+# Connection parameters are retrieved from environment variables for security and flexibility. 
+# Gitignore the .env file containing sensitive information like database credentials.
+# Initilize connection object by passing in connection arugements as keyword arguments. 
+# The connection parameters are retrieved from environment variables for security and flexibility.
+
+connection = psycopg.connect(
     host=os.getenv("DB_HOST"),
     dbname=os.getenv("DB_NAME"),
     user=os.getenv("DB_USER"),
@@ -24,7 +27,11 @@ connection = psycopg.connect( # Initilize connection object by passing in connec
     port=os.getenv("DB_PORT")
 )
 
+# Create two cursors for executing SQL commands. One cursor is used for inserting data into the locations table,
+# and the other cursor is used for inserting data into the readings table.
+
 cursor_location = connection.cursor()
+cursor_readings = connection.cursor()
 
 # The order of the values must match the order of the columns in the
 # INSERT statement. Postgresql attached each %s placeholder to the 
@@ -44,7 +51,7 @@ cursor_location.execute(
     )
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ON CONFLICT (latitude, longitude)
-    DO NOTHING
+    DO UPDATE SET elevation = EXCLUDED.elevation
     RETURNING location_id
     """,
     (
@@ -60,13 +67,36 @@ cursor_location.execute(
 )
 
 result = cursor_location.fetchone()
+location_id = result[0]
+print(f"Location id: {location_id}")
 
-if result is None:
-    print("Location already exists.")
-else:
-    location_id = result[0]
-    print(f"Inserted new location with ID: {location_id}")
+cursor_readings.executemany(
+    """
+    INSERT INTO readings (
+        location_id,
+        forecast_issued,
+        time,
+        temperature_2m,
+        precipitation_probability
+    )
+    VALUES (%s, %s, %s, %s, %s)
+    ON CONFLICT (location_id, time, forecast_issued) DO NOTHING
+    """,
+    [
+        (
+            location_id,
+            reading["forecast_issued"],
+            reading["time"],
+            reading["temperature_2m"],
+            reading["precipitation_probability"]
+        )
+        for reading in readings
+    ]
+)
 
 connection.commit()
+
 cursor_location.close()
+cursor_readings.close()
+
 connection.close()
