@@ -25,7 +25,7 @@ def extractor():
     
     params = {
         "latitude": 35.824086,
-        "longitude": -102.791974,
+        "longitude": -106.791974,
         "hourly": ["temperature_2m", "precipitation_probability"],
         "temperature_unit": "fahrenheit" # Default is Celsius. Change to Fahrenheit for US users.
     }
