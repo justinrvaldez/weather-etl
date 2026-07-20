@@ -44,10 +44,10 @@ def extractor():
     
     # Handle exceptions that may occur during the HTTP request, such as connection errors or invalid responses.
     # The requests.exceptions.RequestException is a base class for all exceptions raised by the requests library. 
-    # If you wnat to handle specific exceptions, you can catch them individually 
+    # If you want to handle specific exceptions, you can catch them individually 
     # (e.g., requests.exceptions.Timeout, requests.exceptions.ConnectionError, etc.) for more granular error handling.
 
     except requests.exceptions.RequestException as e:
         logging.error(f"Extraction failed: {e}")
         raise
-    
+

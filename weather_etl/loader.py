@@ -8,12 +8,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Forecasts from openmeteo are issued at 00:00, 06:00, 12:00, and 18:00. The ETL program will run a few minuutes 
+# after each of the those updated forecasts. To avoid making duplicate rows and enforcing imdempotency, issue dates
+# are zeroed and set to the nearest forecasts window.
+
 issue_date = datetime.datetime.now(datetime.timezone.utc)
 issue_date_hour = (issue_date.hour // 6) * 6
-zeroed_date = issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
-schema_location, readings = transformer(extractor(), zeroed_date)
-
-print(zeroed_date)
+issued_window = issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
+schema_location, readings = transformer(extractor(), issued_window)
 
 # Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
 # Connection parameters are retrieved from environment variables for security and flexibility. 
