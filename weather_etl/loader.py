@@ -12,10 +12,12 @@ load_dotenv()
 # after each of the those updated forecasts. To avoid making duplicate rows and enforcing imdempotency, issue dates
 # are zeroed and set to the nearest forecasts window.
 
-issue_date = datetime.datetime.now(datetime.timezone.utc)
-issue_date_hour = (issue_date.hour // 6) * 6
-issued_window = issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
-schema_location, readings = transformer(extractor(), issued_window)
+def forcast_window():
+    issue_date = datetime.datetime.now(datetime.timezone.utc)
+    issue_date_hour = (issue_date.hour // 6) * 6
+    return issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
+
+schema_location, readings = transformer(extractor(), forcast_window())
 
 # Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
 # Connection parameters are retrieved from environment variables for security and flexibility. 
