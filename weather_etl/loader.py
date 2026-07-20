@@ -9,9 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 issue_date = datetime.datetime.now(datetime.timezone.utc)
-schema_location, readings = transformer(extractor(), issue_date)
+issue_date_hour = (issue_date.hour // 6) * 6
+zeroed_date = issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
+schema_location, readings = transformer(extractor(), zeroed_date)
 
-print(issue_date)
+print(zeroed_date)
 
 # Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
 # Connection parameters are retrieved from environment variables for security and flexibility. 
