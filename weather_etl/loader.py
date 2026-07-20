@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+
+if __name__ == "__main__":
 # Forecasts from openmeteo are issued at 00:00, 06:00, 12:00, and 18:00. The ETL program will run a few minuutes 
 # after each of the those updated forecasts. To avoid making duplicate rows and enforcing imdempotency, issue dates
 # are zeroed and set to the nearest forecasts window.
