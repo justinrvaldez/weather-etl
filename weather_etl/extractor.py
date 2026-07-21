@@ -14,7 +14,7 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
 
-def extractor():
+def extractor(latitude, longitude):
 
     url = "https://api.open-meteo.com/v1/forecast"
 
@@ -24,8 +24,8 @@ def extractor():
     # structure as well as a change to the loader and SQL database schema to handle the new data structure.
     
     params = {
-        "latitude": 35.824086,
-        "longitude": -106.791974,
+        "latitude": latitude,
+        "longitude": longitude,
         "hourly": ["temperature_2m", "precipitation_probability"],
         "temperature_unit": "fahrenheit" # Default is Celsius. Change to Fahrenheit for US users.
     }
