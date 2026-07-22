@@ -123,5 +123,3 @@ if __name__ == "__main__":
     start = "2026-07-11"
     end = "2026-07-11"
     ARCHIVE_LAG_DAYS = 44
-
-    print(actual_window(ARCHIVE_LAG_DAYS))
