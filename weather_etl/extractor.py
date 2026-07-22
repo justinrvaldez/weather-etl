@@ -67,6 +67,7 @@ def extractor_actual(latitude, longitude, start_date, end_date):
         "longitude": longitude,
         "hourly": ["temperature_2m", "precipitation"],
         "temperature_unit": "fahrenheit",
+        "precipitation_unit": "inch",
         "start_date": start_date,
 	    "end_date": end_date
     }
