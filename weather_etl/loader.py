@@ -6,6 +6,7 @@ import pprint
 from transformer import transformer, transformer_actual
 from extractor import extractor, extractor_actual
 from dotenv import load_dotenv
+from config import ARCHIVE_LAG_DAYS, LOCATIONS
 
 load_dotenv()
 
@@ -29,7 +30,8 @@ def main(latitude, longitude):
 
     # the variable actual_location is not used and will be redundant for this etl in its current state. 
     # Imdepotency will handle any conflict.
-    date_actual = actual_window(10)
+    
+    date_actual = actual_window(ARCHIVE_LAG_DAYS)
     schema_location, readings = transformer(extractor(latitude, longitude), forecast_window ())
     actual_location, actual_readings = transformer_actual(extractor_actual(latitude, longitude, date_actual, date_actual))
 
@@ -136,6 +138,6 @@ def main(latitude, longitude):
             connection.commit()
 
 if __name__ == "__main__":
-    latitude = 30.00000
-    longitude = -100.00000
+    latitude = LOCATIONS[0]["latitude"]
+    longitude = LOCATIONS[0]["longitude"]
     main(latitude, longitude)
