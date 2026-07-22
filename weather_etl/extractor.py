@@ -105,4 +105,3 @@ if __name__ == "__main__":
     end = "2026-07-11"
 
     pprint.pprint(extractor_actual(lat, long, start, end))
-    pprint.pprint(extractor(lat, long))

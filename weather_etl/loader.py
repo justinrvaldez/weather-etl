@@ -49,11 +49,10 @@ def main(latitude, longitude):
                     elevation,
                     timezone,
                     utc_offset_seconds,
-                    unit_precipitation,
                     unit_time,
                     unit_temp
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (latitude, longitude)
                 DO UPDATE SET elevation = EXCLUDED.elevation
                 RETURNING location_id
@@ -64,7 +63,6 @@ def main(latitude, longitude):
                     schema_location["elevation"],
                     schema_location["timezone"],
                     schema_location["utc_offset_seconds"],
-                    schema_location["unit_precipitation"],
                     schema_location["unit_time"],
                     schema_location["unit_temp"],
                 )

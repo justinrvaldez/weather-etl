@@ -26,7 +26,6 @@ def transformer(extracted_data, issued_at ):
         "elevation": extracted_data["elevation"],
         "timezone": extracted_data["timezone"],
         "utc_offset_seconds": extracted_data["utc_offset_seconds"],
-        "unit_precipitation": extracted_data["hourly_units"]["precipitation_probability"],
         "unit_time": extracted_data["hourly_units"]["time"],
         "unit_temp": extracted_data["hourly_units"]["temperature_2m"],
     }
@@ -51,3 +50,40 @@ def transformer(extracted_data, issued_at ):
     # Return order matters for consistency, location first, readings second. 
 
     return location, readings
+
+def transformer_actual(extracted_data):
+
+    # Basic length checks to ensure that the arrays in the extracted data have the same length.
+
+    precip_length = len(extracted_data['hourly']['precipitation'])
+    time_length = len(extracted_data['hourly']['time'])
+    temp_length = len(extracted_data['hourly']['temperature_2m'])
+
+    # Check if the lengths of the arrays in the extracted data are equal. If they are not equal, 
+    # raise a ValueError with a message indicating the mismatch. 
+
+    if not (precip_length == time_length == temp_length):
+        raise ValueError(
+            f"Array length mismatch: precip={precip_length}, "
+            f"time={time_length}, temp={temp_length}"
+        )
+
+    # Readings schema is defined as a list of dictionaries, where each dictionary corresponds to a row in the 
+    # readings table. Location_id is set to None, and will be populated with location_id from the location 
+    # table after insertion. The other keys are populated with values from the extracted_data dictionary. 
+    # Reading_id is set to None, as it will be auto-incremented in the database. Nothing is done with the reading_id key
+    # it will exist in the table for now.
+
+    readings_actual = []
+    for i in range(precip_length):
+        readings_actual.append({
+            "reading_id": None,
+            "location_id": None,
+            "time": extracted_data['hourly']['time'][i],
+            "temperature_2m": extracted_data['hourly']['temperature_2m'][i],
+            "precipitation": extracted_data['hourly']['precipitation'][i]
+        })
+    
+    # Return order matters for consistency, location first, readings second. 
+
+    return readings_actual
