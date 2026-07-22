@@ -68,8 +68,22 @@ def transformer_actual(extracted_data):
             f"time={time_length}, temp={temp_length}"
         )
 
-    # Readings schema is defined as a list of dictionaries, where each dictionary corresponds to a row in the 
-    # readings table. Location_id is set to None, and will be populated with location_id from the location 
+    # Location schema is defined as a dictionary with keys corresponding to the columns in the location table.
+    # Location_id is set to None, as it will be auto-incremented in the database. 
+    # The other keys are populated with values from the extracted_data dictionary.
+
+    location = {
+        "location_id": None,
+        "latitude": extracted_data["latitude"],
+        "longitude": extracted_data["longitude"],
+        "elevation": extracted_data["elevation"],
+        "timezone": extracted_data["timezone"],
+        "utc_offset_seconds": extracted_data["utc_offset_seconds"],
+        "unit_time": extracted_data["hourly_units"]["time"],
+        "unit_temp": extracted_data["hourly_units"]["temperature_2m"],
+    }
+
+    # Location_id is set to None, and will be populated with location_id from the location 
     # table after insertion. The other keys are populated with values from the extracted_data dictionary. 
     # Reading_id is set to None, as it will be auto-incremented in the database. Nothing is done with the reading_id key
     # it will exist in the table for now.
@@ -83,7 +97,5 @@ def transformer_actual(extracted_data):
             "temperature_2m": extracted_data['hourly']['temperature_2m'][i],
             "precipitation": extracted_data['hourly']['precipitation'][i]
         })
-    
-    # Return order matters for consistency, location first, readings second. 
 
-    return readings_actual
+    return location, readings_actual
