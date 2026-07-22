@@ -1,9 +1,10 @@
 import psycopg
-import datetime
+import datetime as dt
 import os
+import pprint
 
-from transformer import transformer
-from extractor import extractor
+from transformer import transformer, transformer_actual
+from extractor import extractor, extractor_actual
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,13 +14,24 @@ load_dotenv()
 # are zeroed and set to the nearest forecast_window.
 
 def forecast_window ():
-    issue_date = datetime.datetime.now(datetime.timezone.utc)
+    issue_date = dt.datetime.now(dt.timezone.utc)
     issue_date_hour = (issue_date.hour // 6) * 6
     return issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
 
+def actual_window(lag):
+    shift = dt.timedelta(days=lag)
+    issue_date = dt.datetime.now(dt.timezone.utc)
+    window = issue_date-shift
+    day = window.date().isoformat()
+    return day
+
 def main(latitude, longitude):
 
+    # the variable actual_location is not used and will be redundant for this etl in its current state. 
+    # Imdepotency will handle any conflict.
+    date_actual = actual_window(10)
     schema_location, readings = transformer(extractor(latitude, longitude), forecast_window ())
+    actual_location, actual_readings = transformer_actual(extractor_actual(latitude, longitude, date_actual, date_actual))
 
     # Establish a connection to the PostgreSQL database using psycopg 3. Read as psycho-pg, was a typo when named. 
     # Connection parameters are retrieved from environment variables for security and flexibility. 
@@ -41,6 +53,7 @@ def main(latitude, longitude):
         # INSERT statement. Postgresql attached each %s placeholder to the 
         # corresponding value in the tuple provided as the second argument to cursor_location.execute().
 
+            # Locations
             cursor.execute(
                 """
                 INSERT INTO locations (
@@ -72,6 +85,7 @@ def main(latitude, longitude):
             location_id = result[0]
             print(f"Location id: {location_id}")
 
+            # Readings
             cursor.executemany(
                 """
                 INSERT INTO readings (
@@ -93,6 +107,29 @@ def main(latitude, longitude):
                         reading["precipitation_probability"]
                     )
                     for reading in readings
+                ]
+            )
+
+            # Actual
+            cursor.executemany(
+                """
+                INSERT INTO actuals (
+                    location_id,
+                    time,
+                    temperature_2m,
+                    precipitation
+                )
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (location_id, time) DO NOTHING
+                """,
+                [
+                    (
+                        location_id,
+                        actual_reading["time"],
+                        actual_reading["temperature_2m"],
+                        actual_reading["precipitation"]
+                    )
+                    for actual_reading in actual_readings
                 ]
             )
 
