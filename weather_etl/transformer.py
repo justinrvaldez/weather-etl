@@ -99,3 +99,29 @@ def transformer_actual(extracted_data):
         })
 
     return location, readings_actual
+
+if __name__ == "__main__":
+
+    import pprint # imported here so that it only runs in script
+    import datetime as dt
+    from extractor import extractor
+
+    print("TESTING...")
+
+    def actual_window(lag):
+        shift = dt.timedelta(days=lag)
+        issue_date = dt.datetime.now(dt.timezone.utc)
+        window = issue_date-shift
+        start_date = window.date().isoformat()
+        end_date = window.date().isoformat()
+        return start_date, end_date
+
+    # Testing config to view output structure.
+
+    lat = 36.00000
+    long = -100.00000
+    start = "2026-07-11"
+    end = "2026-07-11"
+    ARCHIVE_LAG_DAYS = 44
+
+    print(actual_window(ARCHIVE_LAG_DAYS))
