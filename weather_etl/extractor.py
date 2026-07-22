@@ -59,6 +59,8 @@ def extractor_actual(latitude, longitude, start_date, end_date):
     # can do so by adding key-value pairs to this dictionary. However this will change the schema of the data 
     # returned by the API, and will require changes to the transformer function to handle the new data 
     # structure as well as a change to the loader and SQL database schema to handle the new data structure.
+    # changing preciption_probablity --> precipitation in this extractor. Actual readinging do not have a probablity assigned
+    # This is a real life measurement and not a guess. This is an example of assymetry between datasets.
     
     params_actual = {
         "latitude": latitude,
