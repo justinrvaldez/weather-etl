@@ -2,7 +2,7 @@ import psycopg
 import datetime as dt
 import os
 import logging
-import requests
+
 
 from transformer import transformer, transformer_actual
 from extractor import extractor, extractor_actual
