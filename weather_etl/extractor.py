@@ -1,19 +1,6 @@
 import requests
 import logging
 
-# For recording information abouut what the program is doing.
-# Logging configuration to log messages with timestamp, log level, and message content. 
-# The logging level is set to INFO, which means that all messages at this level and above 
-# (WARNING, ERROR, CRITICAL) will be logged.
-# Levels of logging severity, in increasing order, are: DEBUG, INFO, WARNING, ERROR, CRITICAL.
-# Currently set to INFO, which means that all messages at this level and above (WARNING, ERROR, CRITICAL) will be 
-# logged. Change after testing to WARNING or ERROR to reduce verbosity in production.
-# The format argument specifies the format of the log messages. 
-# In this case, it includes the timestamp, log level, and message content. Can be changed to 
-# include additional information like module name, function name, etc. if needed.
-
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s")
-
 def extractor(latitude, longitude):
 
     url = "https://api.open-meteo.com/v1/forecast"
@@ -36,7 +23,7 @@ def extractor(latitude, longitude):
     # the program and debugging. May remove after testing to reduce verbosity.
 
     try:
-        logging.info("Starting data extraction from Open-Meteo API...")
+        logging.info("Starting forcasted data extraction from Open-Meteo API...")
         response = requests.get(url, params = params, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -78,7 +65,7 @@ def extractor_actual(latitude, longitude, start_date, end_date):
     # the program and debugging. May remove after testing to reduce verbosity.
 
     try:
-        logging.info("Starting data extraction from Open-Meteo API...")
+        logging.info("Starting archived data extraction from Open-Meteo API......")
         response = requests.get(url, params = params_actual, timeout=10)
         response.raise_for_status()
         data_actual = response.json()
@@ -96,6 +83,8 @@ def extractor_actual(latitude, longitude, start_date, end_date):
 if __name__ == "__main__":
 
     import pprint # imported here so that it only runs in script
+
+    print("TESTING...")
 
     # Testing config to view output structure.
 
