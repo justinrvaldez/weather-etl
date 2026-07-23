@@ -65,7 +65,7 @@ def extractor_actual(latitude, longitude, start_date, end_date):
     # the program and debugging. May remove after testing to reduce verbosity.
 
     try:
-        logging.info("Starting archived data extraction from Open-Meteo API......")
+        logging.info("Starting archived data extraction from Open-Meteo API...")
         response = requests.get(url, params = params_actual, timeout=10)
         response.raise_for_status()
         data_actual = response.json()
