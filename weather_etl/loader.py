@@ -1,7 +1,8 @@
 import psycopg
 import datetime as dt
 import os
-import pprint
+import logging
+import requests
 
 from transformer import transformer, transformer_actual
 from extractor import extractor, extractor_actual
@@ -9,6 +10,19 @@ from dotenv import load_dotenv
 from config import ARCHIVE_LAG_DAYS, LOCATIONS
 
 load_dotenv()
+
+# For recording information abouut what the program is doing.
+# Logging configuration to log messages with timestamp, log level, and message content. 
+# The logging level is set to INFO, which means that all messages at this level and above 
+# (WARNING, ERROR, CRITICAL) will be logged.
+# Levels of logging severity, in increasing order, are: INFO, INFO, WARNING, ERROR, CRITICAL.
+# Currently set to INFO, which means that all messages at this level and above (INFO, WARNING, ERROR, CRITICAL) will be 
+# logged. Change after testing to WARNING or ERROR to reduce verbosity in production.
+# The format argument specifies the format of the log messages. 
+# In this case, it includes the timestamp, log level, and message content. Can be changed to 
+# include additional information like module name, function name, etc. if needed.
+
+logging.basicConfig(filename="weather_etl.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # Forecasts from openmeteo are issued at 00:00, 06:00, 12:00, and 18:00. The ETL program will run a few minuutes 
 # after each of the those updated forecasts. To avoid making duplicate rows and enforcing imdempotency, issue dates
@@ -138,6 +152,13 @@ def main(latitude, longitude):
             connection.commit()
 
 if __name__ == "__main__":
-    latitude = LOCATIONS[0]["latitude"]
-    longitude = LOCATIONS[0]["longitude"]
-    main(latitude, longitude)
+    try:
+        logging.info("Pipeline run starting")
+        latitude = LOCATIONS[0]["latitude"]
+        longitude = LOCATIONS[0]["longitude"]
+        main(latitude, longitude)
+    except Exception as e:
+        logging.exception(f"Extraction failed: {e}")
+        raise
+
+    logging.info("Pipeline run Completed.")
