@@ -8,6 +8,7 @@ from transformer import transformer, transformer_actual
 from extractor import extractor, extractor_actual
 from dotenv import load_dotenv
 from config import ARCHIVE_LAG_DAYS, LOCATIONS
+from pathlib import Path
 
 load_dotenv()
 
@@ -20,9 +21,10 @@ load_dotenv()
 # logged. Change after testing to WARNING or ERROR to reduce verbosity in production.
 # The format argument specifies the format of the log messages. 
 # In this case, it includes the timestamp, log level, and message content. Can be changed to 
-# include additional information like module name, function name, etc. if needed.
 
-logging.basicConfig(filename="weather_etl.log", level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+LOG_PATH = Path(__file__).parent.parent / "weather_etl.log"# include additional information like module name, function name, etc. if needed.
+
+logging.basicConfig(filename=LOG_PATH, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # Forecasts from openmeteo are issued at 00:00, 06:00, 12:00, and 18:00. The ETL program will run a few minuutes 
 # after each of the those updated forecasts. To avoid making duplicate rows and enforcing imdempotency, issue dates
