@@ -23,7 +23,7 @@ def extractor(latitude, longitude):
     # the program and debugging. May remove after testing to reduce verbosity.
 
     try:
-        logging.info("Starting forcasted data extraction from Open-Meteo API...")
+        logging.info("Starting forecast data extraction from Open-Meteo API...")
         response = requests.get(url, params = params, timeout=10)
         response.raise_for_status()
         data = response.json()
