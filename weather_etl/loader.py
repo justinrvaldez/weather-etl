@@ -161,4 +161,4 @@ if __name__ == "__main__":
         logging.exception(f"Extraction failed: {e}")
         raise
 
-    logging.info("Pipeline run Completed.")
+    logging.info("Pipeline run completed.")
