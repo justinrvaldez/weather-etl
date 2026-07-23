@@ -99,7 +99,7 @@ def main(latitude, longitude):
 
             result = cursor.fetchone()
             location_id = result[0]
-            print(f"Location id: {location_id}")
+            logging.info(f"Location id: {location_id}")
 
             # Readings
             cursor.executemany(
