@@ -31,11 +31,13 @@ logging.basicConfig(filename=LOG_PATH, level=logging.INFO, format="%(asctime)s %
 # are zeroed and set to the nearest forecast_window.
 
 def forecast_window ():
+    # TODO: Add docstrings
     issue_date = dt.datetime.now(dt.timezone.utc)
     issue_date_hour = (issue_date.hour // 6) * 6
     return issue_date.replace(hour=issue_date_hour, minute=0,second=0,microsecond=0)
 
 def actual_window(lag):
+    # TODO: Add docstrings
     shift = dt.timedelta(days=lag)
     issue_date = dt.datetime.now(dt.timezone.utc)
     window = issue_date-shift
@@ -43,7 +45,7 @@ def actual_window(lag):
     return day
 
 def main(latitude, longitude):
-
+    # TODO: Add docstrings
     # the variable actual_location is not used and will be redundant for this etl in its current state. 
     # Imdepotency will handle any conflict.
     

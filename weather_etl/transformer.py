@@ -1,5 +1,5 @@
 def transformer(extracted_data, issued_at ):
-
+    # TODO: Add docstrings
     # Basic length checks to ensure that the arrays in the extracted data have the same length.
 
     precipitation_probability_length = len(extracted_data['hourly']['precipitation_probability'])
@@ -52,7 +52,7 @@ def transformer(extracted_data, issued_at ):
     return location, readings
 
 def transformer_actual(extracted_data):
-
+    # TODO: Add docstrings
     # Basic length checks to ensure that the arrays in the extracted data have the same length.
 
     precip_length = len(extracted_data['hourly']['precipitation'])

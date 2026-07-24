@@ -2,7 +2,7 @@ import requests
 import logging
 
 def extractor(latitude, longitude):
-
+    # TODO: Add docstrings
     url = "https://api.open-meteo.com/v1/forecast"
 
     # Parameters for the API request are defined in a dictionary. If you want to add more parameters, you 
@@ -39,7 +39,7 @@ def extractor(latitude, longitude):
         raise
 
 def extractor_actual(latitude, longitude, start_date, end_date):
-
+    # TODO: Add docstrings
     url = "https://archive-api.open-meteo.com/v1/archive"
 
     # Parameters for the API request are defined in a dictionary. If you want to add more parameters, you 
