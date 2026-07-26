@@ -2,11 +2,13 @@
 
 An automated ETL pipeline that extracts weather forecasts and historical observations from the Open-Meteo API, transforms them into a normalized relational schema, and loads them into PostgreSQL for forecast-accuracy analysis.
 
+Framed against Ralph Kimball's *The Data Warehouse Toolkit*, this project is the **data warehousing (DW)** half of the DW/BI (business intelligence) lifecycle: it builds the clean, queryable, dimensionally-modeled store that analysis is run against. The **BI** half — dashboards, reporting, and other deliverables — is a separate process with its own set of questions and design principles, and is intentionally out of scope here. It will be explored in a future project.
+
 ## Overview
 
-This is a self-directed project built to learn modern data engineering patterns end to end. It collects two complementary datasets on a schedule — **forecasts** (what the model predicts) and **actuals** (what was actually observed) — so that forecast accuracy can be measured over time.
+This is a self-directed project built to learn modern data engineering patterns end to end. Like I mentioned in the previous heading, this is the DW portion of the DW/BI framwork outlined in The Data Warehousing Toolkit. It collects two complementary datasets on a schedule — **forecasts** (what the model predicts) and **actuals** (what was actually observed) — so that forecast accuracy can be measured over time. Without domain specific knowledge I was not able to design a BI question that may be answered with this information that would be meaningful.
 
-The project deliberately targets a REST API rather than PDFs or web scraping. Presentation formats require reverse-engineering their structure and break whenever a layout changes; an API provides a documented, stable contract. That choice drives most of what follows.
+The project deliberately targets a REST API rather than PDFs or web scraping. Presentation formats (PDFs, docx, ppt, etc) require data scientist reverse-engineering their structure and break whenever a layout changes; an API provides a documented, stable contract. That choice drives most of what follows.
 
 The pipeline runs unattended every six hours, is safe to re-run without duplicating data, logs to a file for debugging, and has automated tests covering its transformation logic.
 
@@ -14,53 +16,29 @@ The pipeline runs unattended every six hours, is safe to re-run without duplicat
 
 The ETL pipeline has two extract paths that share a single load target.
 
-```
-                    ┌─────────────────────┐
-                    │   Open-Meteo API    │
-                    └──────────┬──────────┘
-                               │
-              ┌────────────────┴────────────────┐
-              │                                 │
-     /v1/forecast (7-day)              /v1/archive (ERA5)
-       looks FORWARD                     looks BACKWARD
-              │                                 │
-              ▼                                 ▼
-        extractor()                    extractor_actual()
-              │                                 │
-              ▼                                 ▼
-       transformer()                  transformer_actual()
-   validate → pivot to rows        validate → pivot to rows
-              │                                 │
-              └────────────────┬────────────────┘
-                               ▼
-                          loader.py
-                  upsert location → capture id
-                   → stamp id onto readings
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │     PostgreSQL      │
-                    │ locations           │
-                    │ readings │ actuals  │
-                    └─────────────────────┘
-```
-
 **Extraction** — Two endpoints. The forecast API returns a 7-day hourly outlook; the archive API (ERA5 reanalysis) returns observed historical weather. Both use plain `requests` with a timeout, status checking, and fail-loud error handling that logs context before re-raising.
 
 **Transform** — The API returns *columnar* data (parallel arrays of times, temperatures, and precipitation). A database table is *row-oriented*, so the transform pivots columns into rows. Before pivoting, it validates that all parallel arrays are the same length and raises a `ValueError` if not — misaligned arrays would silently pair the wrong temperature with the wrong hour.
+
+Row dictionaries (row-oriented, ready to insert). These are parallel arrays and if the len() of the returned data differs betweem any array then a ValueError fires.
+┌───────────────────────────────────────────────────────────┐
+│ { "time": 00:00, "temperature_2m": 75.0, "precipitation": 0.0 } │
+│ { "time": 01:00, "temperature_2m": 72.5, "precipitation": 0.1 } │
+│ { "time": 02:00, "temperature_2m": 70.2, "precipitation": 0.0 } │
+└───────────────────────────────────────────────────────────┘
 
 **Load** — The location is upserted first (`ON CONFLICT ... DO UPDATE ... RETURNING location_id`) to obtain its database-generated id, which is then stamped onto every reading as a foreign key. Readings are bulk-inserted with `ON CONFLICT ... DO NOTHING` so re-runs are safe.
 
 ### A note on late-arriving data
 
-The two paths operate on different timelines. Forecasts describe the future; the ERA5 archive lags real time by several days. This means the actual for a given hour only becomes available well after the forecast for it was made, so the two datasets converge gradually as the pipeline runs. Comparison is a long-run payoff, not an immediate one.
+The two paths operate on different timelines. Forecasts describe the future; the ERA5 archive lags real time by several days. This means the actual for a given hour only becomes available well after the forecast for it was made, so the two datasets converge gradually as the pipeline runs. The archived data lags behind forcasted data by ten days. So from runtime start, 10 days had to pass before we could join datasets together in any meaningful way.
 
 ### Idempotency
 
 Re-running the pipeline within the same forecast window does not create duplicate rows. Two mechanisms make this work:
 
-1. `forecast_issued` is snapped to the nearest 6-hour window (00/06/12/18 UTC) rather than the exact instant of execution, so repeated runs in the same window produce an identical key value.
-2. Unique constraints on the fact tables give the `ON CONFLICT` clauses something to collide against.
+1. `forecast_issued` is snapped to the nearest 6-hour window (00/06/12/18 UTC) rather than the exact instant of execution, so repeated runs in the same window produce an identical key value. These 6 hour windows come from the fact that the weather data is updated in 6 hour intervals. The original idea was to run the program at 1 hour intervals. This caused a large volume of records to be returned and many of these records were duplicates of records that were part of the 6 hour window.
+2. Unique constraints on the fact tables give the `ON CONFLICT` clauses creates a check so that duplicates are not created.
 
 ## Tech Stack
 
@@ -121,9 +99,9 @@ A dimensional model: one dimension table (`locations`) referenced by two fact ta
 
 ### Why the two fact tables differ
 
-Forecasts and observations are not symmetric, and the schema reflects that rather than forcing them into the same shape:
+Forecasts and observations are not symmetric as explained below:
 
-- A forecast reports a **probability** of precipitation (a percentage); an observation reports an **amount** (millimeters or inches). These are different measurements and cannot be compared directly because of differing dimensions.
+- A forecast reports a **probability** of precipitation which is reported as a percentage (%); an observation reports an **amount** (millimeters or inches). These are different measurements and cannot be compared directly through dimensional analysis.
 - A forecast for a given hour can be issued repeatedly as the date approaches, so it needs `forecast_issued` to be uniquely identified. An observation happens once, so it does not.
 
 Temperature is symmetric (°F in both), which makes it the clean basis for accuracy comparison.
@@ -243,24 +221,21 @@ The `forecast_window()` function floors the run time to its 6-hour bucket, so th
 - Mocked API responses in tests, removing the network dependency
 - Containerization with Docker
 - Aggregate accuracy metrics by forecast lead time
+- Multi user git and version control to price workiung within a team
 
 ## What I Learned
 
-<!--
-    Write this yourself — it's the section an interviewer is most likely to ask about,
-    and it should sound like you. Some prompts, using things you actually worked through:
+I built this to learn the basics of data warehousing and to put a real framework behind workflow processes I'd already been doing informally at a previous job. The main things I picked up:
 
-    - Why you moved from PDF extraction to an API, and what that taught you about
-      choosing data sources.
-    - What idempotency actually means in practice, and the bug that taught it to you
-      (microsecond timestamps meant nothing ever collided).
-    - Discovering the forecast/actual asymmetry by reading the API response instead of
-      assuming the two datasets matched.
-    - Why a surrogate key alone doesn't prevent duplicates.
-    - What `DROP ... CASCADE` does, learned the hard way.
-    - Why `ON CONFLICT DO NOTHING` was wrong for locations but right for readings.
-    - How to test code that depends on the current time.
--->
+**Schema design** — modeling data as facts and dimensions instead of one flat table, and thinking about what a single row represents before choosing columns.
+**Relational keys** — the difference between surrogate keys (for referencing) and natural keys (for uniqueness), why a table often needs both, and how foreign keys tie the tables together. A surrogate primary key alone doesn't stop duplicates; a unique constraint on the natural key does.
+**Idempotency** — making the pipeline safe to re-run without duplicating data, using unique constraints, ON CONFLICT upserts, and snapping the forecast time to a fixed window.
+**ETL architecture** — splitting the work into separate extract, transform, and load stages, and reshaping the API's parallel arrays into rows.
+**API connections** — pulling from a REST API with timeouts, status checks, and fail-loud error handling, instead of relying on fragile PDF or scraping approaches.
+**SQL** — writing inserts, upserts, and the join that compares forecasts to actuals, and saving it as a view. Also learned why table order matters after a DROP ... CASCADE took out more than I expected.
+**Windows Task Scheduler** — running the pipeline unattended on a schedule, and the practical details that come with it: using the venv's interpreter, setting the working directory, and logging to a file so a failed run leaves a record.
+**Project setup** — .gitignore for secrets and generated files, .env with a committed .env.example, requirements.txt for dependencies, and Git for version control on a solo project.
+**Documentation** — writing this README in Markdown so the project makes sense to someone seeing it for the first time.
 
 ## License
 
