@@ -12,7 +12,7 @@ The pipeline runs unattended every six hours, is safe to re-run without duplicat
 
 ## Architecture
 
-The pipeline has two extract paths that share a single load target.
+The ETL pipeline has two extract paths that share a single load target.
 
 ```
                     ┌─────────────────────┐
@@ -45,7 +45,7 @@ The pipeline has two extract paths that share a single load target.
                     └─────────────────────┘
 ```
 
-**Extract** — Two endpoints. The forecast API returns a 7-day hourly outlook; the archive API (ERA5 reanalysis) returns observed historical weather. Both use plain `requests` with a timeout, status checking, and fail-loud error handling that logs context before re-raising.
+**Extraction** — Two endpoints. The forecast API returns a 7-day hourly outlook; the archive API (ERA5 reanalysis) returns observed historical weather. Both use plain `requests` with a timeout, status checking, and fail-loud error handling that logs context before re-raising.
 
 **Transform** — The API returns *columnar* data (parallel arrays of times, temperatures, and precipitation). A database table is *row-oriented*, so the transform pivots columns into rows. Before pivoting, it validates that all parallel arrays are the same length and raises a `ValueError` if not — misaligned arrays would silently pair the wrong temperature with the wrong hour.
 
@@ -123,7 +123,7 @@ A dimensional model: one dimension table (`locations`) referenced by two fact ta
 
 Forecasts and observations are not symmetric, and the schema reflects that rather than forcing them into the same shape:
 
-- A forecast reports a **probability** of precipitation (a percentage); an observation reports an **amount** (millimeters). These are different measurements and cannot be compared directly.
+- A forecast reports a **probability** of precipitation (a percentage); an observation reports an **amount** (millimeters or inches). These are different measurements and cannot be compared directly because of differing dimensions.
 - A forecast for a given hour can be issued repeatedly as the date approaches, so it needs `forecast_issued` to be uniquely identified. An observation happens once, so it does not.
 
 Temperature is symmetric (°F in both), which makes it the clean basis for accuracy comparison.
